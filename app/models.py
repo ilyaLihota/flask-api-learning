@@ -76,7 +76,6 @@ class User(db.Model):
             'first_name': self.first_name,
             'last_name': self.last_name,
             'date_joined': self.date_joined,
-            # 'role': self.role.id,
             'wallets': [url_for('api.get_wallet', id=wallet.id, _external=True)
                         for wallet in self.wallets],
             'transactions': [url_for('api.get_transaction', id=transaction.id, _external=True)
@@ -150,7 +149,7 @@ class Wallet(db.Model):
             'created_at': self.created_at,
             'currency': self.currency,
             'initial_balance': self.initial_balance,
-            # 'owner': url_for('api.get_user', id=self.owner_id, _external=True),
+            'owner': url_for('api.get_user', id=self.owner_id, _external=True),
             'parent_categories': [url_for('api.get_parent_category', id=parent_category.id, _external=True)
                                   for parent_category in self.parent_categories],
         }
