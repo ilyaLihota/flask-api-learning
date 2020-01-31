@@ -66,6 +66,42 @@ class UserTestCase(unittest.TestCase):
         db.drop_all()
         self.app_context.pop()
 
+    def test_get_all_users(self):
+        """
+        The test case for get_all_users view.
+        """
+        # Create one more user
+        self.client.post(
+            url_for('api.create_user'),
+            headers=self.get_token_headers(self.token),
+            data=json.dumps(self.data)
+        )
+        response = self.client.get(
+            url_for('api.get_all_users'),
+            headers=self.get_token_headers(self.token)
+        )
+
+        self.assertTrue(response.status_code == 200)
+        self.assertTrue(len(response.json['users']) == 2)
+
+    def test_get_user(self):
+        """
+        The test case for get_user view.
+        """
+        user = User.query.first()
+        response = self.client.get(
+            url_for('api.get_user', id=user.id),
+            headers=self.get_token_headers(self.token)
+        )
+
+        self.assertTrue(response.status_code == 200)
+        self.assertTrue(response.json['username'] == user.username)
+        self.assertTrue(response.json['email'] == user.email)
+        self.assertTrue(response.json['password'], user.password)
+        self.assertTrue(response.json['confirmed'] == user.confirmed)
+        self.assertTrue(response.json['first_name'] == user.first_name)
+        self.assertTrue(response.json['last_name'] == user.last_name)
+
     def test_create_user(self):
         """
         The test case for create_user view.
@@ -89,13 +125,12 @@ class UserTestCase(unittest.TestCase):
         The test case for update_user view.
         """
         user = User.query.first()
-        print(user)
         response = self.client.put(
             url_for('api.update_user', id=user.id),
             headers=self.get_token_headers(self.token),
             data=json.dumps(self.data)
         )
-        print(response.json)
+
         self.assertTrue(response.status_code == 200)
         self.assertTrue(response.json['username'] == self.data['username'])
         self.assertTrue(response.json['email'] == self.data['email'])
@@ -103,3 +138,17 @@ class UserTestCase(unittest.TestCase):
         self.assertTrue(response.json['confirmed'] == self.data['confirmed'])
         self.assertTrue(response.json['first_name'] == self.data['first_name'])
         self.assertTrue(response.json['last_name'] == self.data['last_name'])
+
+    def test_delete_user(self):
+        """
+        The test case for delete_user view.
+        """
+        user = User.query.first()
+        response = self.client.delete(
+            url_for('api.delete_user', id=user.id),
+            headers=self.get_token_headers(self.token),
+            data=json.dumps(self.data)
+        )
+
+        self.assertTrue(response.status_code == 200)
+        self.assertIsNone(User.query.first())

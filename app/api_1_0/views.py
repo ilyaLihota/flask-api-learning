@@ -3,7 +3,7 @@ from functools import wraps
 
 import jwt
 from flask import jsonify, url_for, request
-from werkzeug.security import check_password_hash, generate_password_hash
+from werkzeug.security import check_password_hash
 
 from config import Config
 from . import api
@@ -17,12 +17,14 @@ def token_required(func):
     def wrapper(*args, **kwargs):
         token = request.headers.get('x-access-token', None)
         if not token:
-            return jsonify({'message': 'Token is missing!'}), 401
+            return jsonify({'message': 'Token is missing!',
+                            'code': 401})
         try:
             data = jwt.decode(token, Config.SECRET_KEY)
             current_user = User.query.filter_by(id=data['id']).first()
         except:
-            return jsonify({'message': 'Token is invalid!'}), 401
+            return jsonify({'message': 'Token is invalid!',
+                            'code': 401})
         return func(current_user, *args, **kwargs)
     return wrapper
 
@@ -74,7 +76,7 @@ def get_user(current_user, id):
     except:
         return jsonify({'message': 'The user doesn\'t exists.',
                         'code': 404})
-    return jsonify(user.to_json())
+    return jsonify(user.to_json()), 200
 
 
 @api.route('/users/', methods=['POST'])
@@ -96,7 +98,6 @@ def update_user(current_user, id):
                         'code': 404})
     if current_user is user:
         data = request.json
-        print('data: ', data)
         user.update(data)
         db.session.commit()
         return jsonify(user.to_json()), 200
