@@ -214,7 +214,7 @@ class ParentCategory(db.Model):
             'title': self.title,
             'budget': self.budget,
             'is_income': self.is_income,
-            'wallet': url_for('api.get_wallet', id=self.wallet.id, _external=True),
+            'wallet': url_for('api.get_wallet', id=self.wallet_id, _external=True),
             'categories': [url_for('api.get_category', id=category.id, _external=True)
                            for category in self.categories],
         }
