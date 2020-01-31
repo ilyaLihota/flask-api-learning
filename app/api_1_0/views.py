@@ -153,6 +153,7 @@ def create_wallet(current_user):
 
 
 @api.route('/wallets/<int:id>', methods=['PUT'])
+@token_required
 def update_wallet(current_user, id):
     try:
         wallet = Wallet.query.filter_by(id=id).first()
@@ -164,7 +165,7 @@ def update_wallet(current_user, id):
         data = request.json
         wallet.update(data)
         db.session.commit()
-        return jsonify({wallet.to_json()}), 200
+        return jsonify(wallet.to_json()), 200
     return jsonify({'message': 'You can\'t edit the wallets of other users!',
                     'code': 403})
 
@@ -177,12 +178,13 @@ def delete_wallet(current_user, id):
     except:
         return jsonify({'message': 'The wallet not found!',
                         'code': 404})
-    wallet_owner = User.query.filter_by(id=wallet.owner_id)
+    wallet_owner = User.query.filter_by(id=wallet.owner_id).first()
     if current_user is wallet_owner:
         wallet.delete()
         db.session.commit()
         return jsonify({'message': 'The wallet has been deleted.',
                         'code': 200})
+    print(current_user, wallet_owner)
     return jsonify({'message': 'You can\'t delete the wallets of other users!',
                     'code': 403})
 

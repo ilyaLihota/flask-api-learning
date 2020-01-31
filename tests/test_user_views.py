@@ -1,13 +1,12 @@
 import json
 import unittest
 from base64 import b64encode
-from datetime import datetime
 
 from flask import url_for
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import check_password_hash
 
 from app import create_app, db
-from app.models import User, Role
+from app.models import User
 
 
 class UserTestCase(unittest.TestCase):
