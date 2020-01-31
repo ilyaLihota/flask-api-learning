@@ -41,6 +41,7 @@ class User(db.Model):
         user.password = generate_password_hash(data.get('password'))
         user.first_name = data.get('first_name')
         user.last_name = data.get('last_name')
+        user.confirmed = data.get('confirmed', False)
         return user
 
     @staticmethod
@@ -54,7 +55,7 @@ class User(db.Model):
             user = User()
             user.username = forgery_py.internet.user_name(True)
             user.email = forgery_py.internet.email_address()
-            user.password = forgery_py.lorem_ipsum.word()
+            user.password = generate_password_hash(forgery_py.lorem_ipsum.word())
             user.confirmed = True
             user.first_name = forgery_py.name.first_name()
             user.last_name = forgery_py.name.last_name()
@@ -84,13 +85,12 @@ class User(db.Model):
         return json
 
     def update(self, data):
-        user = User()
-        user.username = data.get('username', user.username)
-        user.email = data.get('email', user.email)
-        user.password = generate_password_hash(data.get('password')) or user.password
-        user.first_name = data.get('first_name', user.first_name)
-        user.last_name = data.get('last_name', user.last_name)
-        return user
+        self.username = data.get('username', self.username)
+        self.email = data.get('email', self.email)
+        self.password = generate_password_hash(data.get('password')) or self.password
+        self.first_name = data.get('first_name', self.first_name)
+        self.last_name = data.get('last_name', self.last_name)
+        return self
 
     def delete(self):
         wallets = Wallet.query.filter_by(owner_id=self.id).all()

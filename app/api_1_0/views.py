@@ -27,7 +27,7 @@ def token_required(func):
     return wrapper
 
 
-@api.route('/login/', methods=['GET'])
+@api.route('/login/', methods=['POST'])
 def login():
     auth = request.authorization
     try:
@@ -96,6 +96,7 @@ def update_user(current_user, id):
                         'code': 404})
     if current_user is user:
         data = request.json
+        print('data: ', data)
         user.update(data)
         db.session.commit()
         return jsonify(user.to_json()), 200
