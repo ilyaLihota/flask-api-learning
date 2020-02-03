@@ -6,7 +6,7 @@ from random import randint, choice
 from flask import url_for
 
 from app import create_app, db
-from app.models import User, Wallet, ParentCategory, Category
+from app.models import User, Wallet, ParentCategory, Category, Transaction
 
 
 class CategoryTestCase(unittest.TestCase):
@@ -75,99 +75,111 @@ class CategoryTestCase(unittest.TestCase):
         db.session.add(self.category)
         db.session.commit()
 
-        self.data = {'title': 'test_category2',
-                     'budget': randint(0, 1000),
-                     'has_bills': choice([True, False]),
-                     'parent_category_id': self.parent_category.id}
+        # Create transaction
+        self.transaction = Transaction.from_json({'amount': randint(1, 2000),
+                                                  'description': 'some description',
+                                                  'category_id': self.category.id,
+                                                  'maker_id': self.user.id})
+        db.session.add(self.transaction)
+        db.session.commit()
+
+        self.data = {'amount': randint(1, 2000),
+                     'description': 'some description 2',
+                     'category_id': self.category.id,
+                     'maker_id': self.user.id}
 
     def tearDown(self) -> None:
         db.session.remove()
         db.drop_all()
         self.app_context.pop()
 
-    def test_get_all_categories(self):
+    def test_get_all_transactions(self):
         """
-        The test case for get_all_categories view.
+        The test case for get_all_transactions view.
         """
-        # Create 3 categories
         for i in range(3):
-            c = Category.from_json({'title': 'test_parent_category{}'.format(i),
-                                    'budget': randint(0, 1000),
-                                    'has_bills': choice([True, False]),
-                                    'parent_category_id': self.parent_category.id})
-            db.session.add(c)
+            t = Transaction.from_json({'amount': randint(1, 2000),
+                                       'description': 'some description{}'.format(i),
+                                       'category_id': self.category.id,
+                                       'maker_id': self.user.id})
+            db.session.add(t)
         db.session.commit()
 
         response = self.client.get(
-            url_for('api.get_all_categories'),
+            url_for('api.get_all_transactions'),
             headers=self.get_token_headers(self.token)
         )
 
         self.assertTrue(response.status_code == 200)
-        self.assertTrue(len(response.json['categories']) == 4)
+        self.assertTrue(len(response.json['transactions']), 4)
 
-    def test_get_category(self):
+    def test_get_transaction(self):
         """
-        The test case for get_category view.
+        The test case for get_transaction view.
         """
         response = self.client.get(
-            url_for('api.get_category', id=self.category.id),
+            url_for('api.get_transaction', id=self.transaction.id),
             headers=self.get_token_headers(self.token)
         )
 
         self.assertTrue(response.status_code == 200)
-        self.assertTrue(response.json['id'] == self.category.id)
-        self.assertTrue(response.json['title'] == self.category.title)
-        self.assertTrue(response.json['budget'] == self.category.budget)
-        self.assertTrue(response.json['has_bills'] == self.category.has_bills)
-        self.assertTrue(response.json['parent_category'] == url_for('api.get_parent_category',
-                                                                    id=self.category.parent_category_id,
-                                                                    _external=True))
+        self.assertTrue(response.json['amount'] == self.transaction.amount)
+        self.assertTrue(response.json['description'] == self.transaction.description)
+        self.assertTrue(response.json['category'] == url_for('api.get_category',
+                                                             id=self.transaction.category_id,
+                                                             _external=True))
+        self.assertTrue(response.json['maker'] == url_for('api.get_user',
+                                                             id=self.transaction.maker_id,
+                                                             _external=True))
 
-    def test_create_category(self):
+    def test_create_transaction(self):
         """
-        The test case for create_category view.
+        The test case for create_transaction view.
         """
         response = self.client.post(
-            url_for('api.create_category'),
+            url_for('api.create_transaction'),
             headers=self.get_token_headers(self.token),
             data=json.dumps(self.data)
         )
 
         self.assertTrue(response.status_code == 201)
-        self.assertTrue(response.json['title'] == self.data['title'])
-        self.assertTrue(response.json['budget'] == self.data['budget'])
-        self.assertTrue(response.json['has_bills'] == self.data['has_bills'])
-        self.assertTrue(response.json['parent_category'] == url_for('api.get_parent_category',
-                                                                    id=self.data['parent_category_id'],
-                                                                    _external=True))
+        self.assertTrue(response.json['amount'] == self.data['amount'])
+        self.assertTrue(response.json['description'] == self.data['description'])
+        self.assertTrue(response.json['category'] == url_for('api.get_category',
+                                                             id=self.data['category_id'],
+                                                             _external=True))
+        self.assertTrue(response.json['maker'] == url_for('api.get_user',
+                                                          id=self.data['maker_id'],
+                                                          _external=True))
 
-    def test_update_category(self):
+    def test_update_transaction(self):
         """
-        The test case for update_category view.
+        The test case for update_transaction view.
         """
         response = self.client.put(
-            url_for('api.update_category', id=self.category.id),
+            url_for('api.update_transaction', id=self.transaction.id),
             headers=self.get_token_headers(self.token),
             data=json.dumps(self.data)
         )
 
         self.assertTrue(response.status_code == 200)
-        self.assertTrue(response.json['title'] == self.data['title'])
-        self.assertTrue(response.json['budget'] == self.data['budget'])
-        self.assertTrue(response.json['has_bills'] == self.data['has_bills'])
-        self.assertTrue(response.json['parent_category'] == url_for('api.get_parent_category',
-                                                                    id=self.data['parent_category_id'],
-                                                                    _external=True))
+        self.assertTrue(response.json['amount'] == self.data['amount'])
+        self.assertTrue(response.json['description'] == self.data['description'])
+        self.assertTrue(response.json['category'] == url_for('api.get_category',
+                                                             id=self.data['category_id'],
+                                                             _external=True))
+        self.assertTrue(response.json['maker'] == url_for('api.get_user',
+                                                          id=self.data['maker_id'],
+                                                          _external=True))
 
-    def test_delete_category(self):
+    def test_delete_transaction(self):
         """
-        The test case for delete_category view.
+        The test case for delete_transaction view.
         """
         response = self.client.delete(
-            url_for('api.delete_category', id=self.category.id),
+            url_for('api.delete_transaction', id=self.transaction.id),
             headers=self.get_token_headers(self.token)
         )
 
         self.assertTrue(response.status_code == 200)
-        self.assertIsNone(Category.query.first())
+        self.assertIsNone(Transaction.query.first())

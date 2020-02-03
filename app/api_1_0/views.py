@@ -358,7 +358,7 @@ def get_all_transactions(current_user):
 @token_required
 def get_transaction(current_user, id):
     try:
-        transaction = Transaction.query.get_or_404(id)
+        transaction = Transaction.query.filter_by(id=id).first()
     except:
         return jsonify({'message': 'The transaction doesn\'t exists.',
                         'code': 404})
